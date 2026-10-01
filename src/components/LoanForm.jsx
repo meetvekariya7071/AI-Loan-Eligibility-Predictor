@@ -4,7 +4,97 @@ import {
   Sparkles, RotateCcw, AlertCircle, HelpCircle, CheckCircle2 
 } from 'lucide-react';
 
-export default function LoanForm({ onSubmit, loading, presets, defaults }) {
+const DEFAULT_PRESETS = [
+  {
+    name: "High Approval Candidate",
+    description: "High credit score, steady salaried income, low DTI, high savings.",
+    data: {
+      Applicant_Name: "Robert Vance",
+      Applicant_Income: 18500,
+      Coapplicant_Income: 4500,
+      Age: 38,
+      Dependents: 1,
+      Credit_Score: 760,
+      Existing_Loans: 1,
+      DTI_Ratio: 0.22,
+      Savings: 28000,
+      Collateral_Value: 45000,
+      Loan_Amount: 25000,
+      Loan_Term: 36,
+      Employment_Status: "Salaried",
+      Marital_Status: "Married",
+      Loan_Purpose: "Home",
+      Property_Area: "Urban",
+      Gender: "Male",
+      Employer_Category: "MNC",
+      Education_Level: "Graduate"
+    }
+  },
+  {
+    name: "Quick Fill (Essential Only)",
+    description: "Only 5 key fields provided! Smart AI defaults fill remaining fields.",
+    data: {
+      Applicant_Name: "Sophia Taylor",
+      Applicant_Income: 12000,
+      Credit_Score: 710,
+      Loan_Amount: 15000,
+      Loan_Term: 24,
+      Employment_Status: "Salaried"
+    }
+  },
+  {
+    name: "High Risk Candidate",
+    description: "Low credit score, high existing debt ratio, zero savings.",
+    data: {
+      Applicant_Name: "James Miller",
+      Applicant_Income: 4500,
+      Coapplicant_Income: 0,
+      Age: 24,
+      Dependents: 3,
+      Credit_Score: 510,
+      Existing_Loans: 4,
+      DTI_Ratio: 0.65,
+      Savings: 500,
+      Collateral_Value: 0,
+      Loan_Amount: 35000,
+      Loan_Term: 72,
+      Employment_Status: "Unemployed",
+      Marital_Status: "Single",
+      Loan_Purpose: "Personal",
+      Property_Area: "Rural",
+      Gender: "Male",
+      Employer_Category: "Unemployed",
+      Education_Level: "Not Graduate"
+    }
+  },
+  {
+    name: "Self-Employed Entrepreneur",
+    description: "Moderate income, substantial collateral, average credit score.",
+    data: {
+      Applicant_Name: "Elena Rostova",
+      Applicant_Income: 14000,
+      Coapplicant_Income: 2500,
+      Age: 32,
+      Dependents: 0,
+      Credit_Score: 665,
+      Existing_Loans: 2,
+      DTI_Ratio: 0.38,
+      Savings: 12500,
+      Collateral_Value: 38000,
+      Loan_Amount: 20000,
+      Loan_Term: 48,
+      Employment_Status: "Self-employed",
+      Marital_Status: "Single",
+      Loan_Purpose: "Business",
+      Property_Area: "Semiurban",
+      Gender: "Female",
+      Employer_Category: "Self-employed",
+      Education_Level: "Graduate"
+    }
+  }
+];
+
+export default function LoanForm({ onSubmit, loading, presets = [], defaults }) {
   const [mode, setMode] = useState('quick'); // 'quick' or 'full'
   const [formData, setFormData] = useState({
     Applicant_Name: '',
@@ -27,6 +117,8 @@ export default function LoanForm({ onSubmit, loading, presets, defaults }) {
     Employer_Category: 'Private',
     Education_Level: 'Graduate'
   });
+
+  const activePresets = presets && presets.length > 0 ? presets : DEFAULT_PRESETS;
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -140,7 +232,7 @@ export default function LoanForm({ onSubmit, loading, presets, defaults }) {
           ⚡ 1-Click Demo Profiles (Test Predictions Instantly):
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          {presets.map((preset, idx) => (
+          {activePresets.map((preset, idx) => (
             <button
               key={idx}
               type="button"

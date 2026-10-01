@@ -54,8 +54,8 @@ class LoanPredictorModel:
                 self.scaler = artifact['scaler']
                 self.num_imputer = artifact['num_imputer']
                 self.cat_imputer = artifact['cat_imputer']
-                self.education_encoder = artifact['education_encoder']
-                self.ohe_encoder = artifact['ohe_encoder']
+                self.education_encoder = artifact.get('education_encoder')
+                self.ohe_encoder = artifact.get('ohe_encoder')
                 self.feature_columns = artifact['feature_columns']
                 self.defaults = artifact['defaults']
                 self.historical_applications = artifact['historical_applications']
@@ -112,31 +112,38 @@ class LoanPredictorModel:
 
     def _train_model(self):
         df = self.raw_df.copy()
+        df = df.drop(columns=['Applicant_ID'], errors='ignore')
         
-        for col in self.num_cols:
+        num_cols = list(df.select_dtypes(include=['float64']).columns)
+        cat_cols = [c for c in df.columns if c not in num_cols and c != 'Loan_Approved']
+
+        for col in num_cols:
             self.defaults[col] = float(df[col].dropna().median()) if not df[col].dropna().empty else 0.0
-        for col in self.cat_cols:
+        for col in cat_cols:
             self.defaults[col] = str(df[col].dropna().mode()[0]) if not df[col].dropna().empty else "Salaried"
         self.defaults['Education_Level'] = str(df['Education_Level'].dropna().mode()[0]) if not df['Education_Level'].dropna().empty else "Graduate"
 
         self.num_imputer = SimpleImputer(strategy='mean')
-        df[self.num_cols] = self.num_imputer.fit_transform(df[self.num_cols])
+        df[num_cols] = self.num_imputer.fit_transform(df[num_cols])
         
         self.cat_imputer = SimpleImputer(strategy='most_frequent')
-        df[self.cat_cols] = self.cat_imputer.fit_transform(df[self.cat_cols])
+        df[cat_cols] = self.cat_imputer.fit_transform(df[cat_cols])
         
         self.education_encoder = LabelEncoder()
-        df['Education_Level_Code'] = self.education_encoder.fit_transform(df['Education_Level'].astype(str))
+        df['Education_Level'] = self.education_encoder.fit_transform(df['Education_Level'].astype(str))
         
-        df['Loan_Approved_Code'] = df['Loan_Approved'].apply(lambda x: 1 if str(x).strip().lower() in ['yes', '1', 'approved'] else 0)
+        le_target = LabelEncoder()
+        df['Loan_Approved'] = le_target.fit_transform(df['Loan_Approved'].astype(str))
         
+        ohe_cols = ['Employment_Status', 'Marital_Status', 'Loan_Purpose', 'Property_Area', 'Gender', 'Employer_Category']
         self.ohe_encoder = OneHotEncoder(drop='first', sparse_output=False, handle_unknown='ignore')
-        encoded_cat = self.ohe_encoder.fit_transform(df[self.cat_cols])
-        encoded_cat_df = pd.DataFrame(encoded_cat, columns=self.ohe_encoder.get_feature_names_out(self.cat_cols), index=df.index)
+        encoded = self.ohe_encoder.fit_transform(df[ohe_cols])
+        encoded_df = pd.DataFrame(encoded, columns=self.ohe_encoder.get_feature_names_out(ohe_cols), index=df.index)
         
-        X = pd.concat([df[self.num_cols], df[['Education_Level_Code']].rename(columns={'Education_Level_Code': 'Education_Level'}), encoded_cat_df], axis=1)
-        y = df['Loan_Approved_Code']
+        df_final = pd.concat([df.drop(columns=ohe_cols), encoded_df], axis=1)
         
+        X = df_final.drop('Loan_Approved', axis=1)
+        y = df_final['Loan_Approved']
         self.feature_columns = list(X.columns)
         
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -144,7 +151,7 @@ class LoanPredictorModel:
         self.scaler = StandardScaler()
         X_train_scaled = self.scaler.fit_transform(X_train)
         
-        self.model = RandomForestClassifier(n_estimators=120, max_depth=12, random_state=42)
+        self.model = RandomForestClassifier(n_estimators=120, max_depth=10, random_state=42)
         self.model.fit(X_train_scaled, y_train)
         
         male_names = ['Arthur White', 'Michael Chang', 'David Miller', 'James Taylor', 'Robert Vance', 'William Davis', 'Joseph Garcia', 'Thomas Martinez']
@@ -204,7 +211,8 @@ class LoanPredictorModel:
                 except ValueError:
                     filled_dict[col] = self.defaults[col]
 
-        for col in self.cat_cols:
+        ohe_cols = ['Employment_Status', 'Marital_Status', 'Loan_Purpose', 'Property_Area', 'Gender', 'Employer_Category']
+        for col in ohe_cols:
             val = input_dict.get(col)
             if not val or str(val).strip() == '':
                 filled_dict[col] = self.defaults[col]
@@ -217,19 +225,20 @@ class LoanPredictorModel:
         else:
             filled_dict['Education_Level'] = str(edu_val).strip()
 
-        num_df = pd.DataFrame([filled_dict])[self.num_cols]
-        num_df_imputed = pd.DataFrame(self.num_imputer.transform(num_df), columns=self.num_cols)
+        row_dict = {col: 0.0 for col in self.feature_columns}
+        for col in self.num_cols:
+            row_dict[col] = filled_dict[col]
 
-        edu_str = filled_dict['Education_Level'].lower()
-        edu_encoded_val = 1 if 'grad' in edu_str and 'not' not in edu_str else 0
+        edu_str = str(filled_dict['Education_Level']).lower()
+        row_dict['Education_Level'] = 0.0 if ('grad' in edu_str and 'not' not in edu_str) else 1.0
 
-        cat_df = pd.DataFrame([filled_dict])[self.cat_cols]
-        cat_df_imputed = pd.DataFrame(self.cat_imputer.transform(cat_df), columns=self.cat_cols)
-        ohe_features = self.ohe_encoder.transform(cat_df_imputed)
-        ohe_df = pd.DataFrame(ohe_features, columns=self.ohe_encoder.get_feature_names_out(self.cat_cols))
+        for cat_col in ohe_cols:
+            val = filled_dict[cat_col]
+            target_feat = f"{cat_col}_{val}"
+            if target_feat in row_dict:
+                row_dict[target_feat] = 1.0
 
-        full_df = pd.concat([num_df_imputed, pd.DataFrame([{'Education_Level': edu_encoded_val}]), ohe_df], axis=1)
-        full_df = full_df[self.feature_columns]
+        full_df = pd.DataFrame([row_dict])[self.feature_columns]
 
         scaled_X = self.scaler.transform(full_df)
 

@@ -28,14 +28,14 @@ export function runClientSidePrediction(inputDict, defaults = {}) {
   if (creditScore >= 750) score += 25;
   else if (creditScore >= 680) score += 15;
   else if (creditScore >= 600) score += 5;
-  else score -= 25;
+  else score -= 35;
 
   if (dti <= 0.28) score += 15;
   else if (dti <= 0.38) score += 8;
-  else if (dti > 0.50) score -= 20;
+  else if (dti > 0.50) score -= 25;
 
   if (income > 0 && (loanAmt / income) <= 2.5) score += 12;
-  else if (income > 0 && (loanAmt / income) > 4.5) score -= 15;
+  else if (income > 0 && (loanAmt / income) > 4.5) score -= 20;
 
   if (savings >= loanAmt * 0.3) score += 10;
   else if (savings >= loanAmt * 0.1) score += 5;
@@ -44,9 +44,13 @@ export function runClientSidePrediction(inputDict, defaults = {}) {
   else if (collateral === 0) score -= 5;
 
   if (empStatus === 'Salaried' || empStatus === 'MNC') score += 5;
-  else if (empStatus === 'Unemployed') score -= 20;
+  else if (empStatus === 'Unemployed') score -= 30;
 
-  const probability = Math.min(98.5, Math.max(8.0, Math.round(score * 10) / 10));
+  let probability = Math.min(96.0, Math.max(0.0, Math.round(score * 10) / 10));
+  if (creditScore < 550 && empStatus === 'Unemployed') {
+    probability = 0.0;
+  }
+
   const isApproved = probability >= 50.0;
   const prediction = isApproved ? 'Approved' : 'Rejected';
 
