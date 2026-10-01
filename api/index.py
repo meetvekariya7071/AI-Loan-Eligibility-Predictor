@@ -11,7 +11,7 @@ from flask_cors import CORS
 from model_service import LoanPredictorModel
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 predictor = LoanPredictorModel()
 
@@ -136,9 +136,11 @@ def get_presets():
         ]
     })
 
-@app.route('/api/predict', methods=['POST'])
-@app.route('/predict', methods=['POST'])
+@app.route('/api/predict', methods=['POST', 'OPTIONS'])
+@app.route('/predict', methods=['POST', 'OPTIONS'])
 def predict():
+    if request.method == 'OPTIONS':
+        return jsonify({"status": "ok"}), 200
     try:
         data = request.json or {}
         result = predictor.predict_and_save(data)
