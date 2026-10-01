@@ -1,13 +1,6 @@
 import os
 import sys
 import io
-import pandas as pd
-import numpy as np
-
-from sklearn.model_selection import train_test_split
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
-from sklearn.ensemble import RandomForestClassifier
 
 # Force UTF-8 encoding on Windows
 if hasattr(sys.stdout, 'reconfigure'):
@@ -20,6 +13,14 @@ if hasattr(sys.stderr, 'reconfigure'):
         sys.stderr.reconfigure(encoding='utf-8')
     except Exception:
         pass
+
+import pandas as pd
+import numpy as np
+
+from sklearn.model_selection import train_test_split
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
+from sklearn.ensemble import RandomForestClassifier
 
 class LoanPredictorModel:
     def __init__(self):
@@ -50,10 +51,9 @@ class LoanPredictorModel:
 
     def _find_and_load_dataset(self):
         possible_paths = [
-            os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "Modal train", "loan_approval_data.csv")),
-            os.path.abspath(os.path.join(os.path.dirname(__file__), "loan_approval_data.csv")),
-            os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Modal train", "loan_approval_data.csv")),
             os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "loan_approval_data.csv")),
+            os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Modal train", "loan_approval_data.csv")),
+            os.path.abspath(os.path.join(os.path.dirname(__file__), "loan_approval_data.csv")),
             os.path.abspath(os.path.join(os.getcwd(), "Modal train", "loan_approval_data.csv")),
             os.path.abspath(os.path.join(os.getcwd(), "api", "data", "loan_approval_data.csv")),
         ]

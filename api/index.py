@@ -1,18 +1,10 @@
-import sys
-import io
 import os
+import sys
 
-# Force UTF-8 stdout/stderr on Windows
-if hasattr(sys.stdout, 'reconfigure'):
-    try:
-        sys.stdout.reconfigure(encoding='utf-8')
-    except Exception:
-        pass
-if hasattr(sys.stderr, 'reconfigure'):
-    try:
-        sys.stderr.reconfigure(encoding='utf-8')
-    except Exception:
-        pass
+# Ensure local imports inside api folder work on Vercel serverless
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -21,19 +13,20 @@ from model_service import LoanPredictorModel
 app = Flask(__name__)
 CORS(app)
 
-# Initialize Model Engine
 predictor = LoanPredictorModel()
 
 @app.route('/api/health', methods=['GET'])
+@app.route('/health', methods=['GET'])
 def health():
     return jsonify({
         "status": "healthy",
         "model": "Random Forest Classifier",
         "dataset_source": "loan_approval_data.csv",
-        "database": "In-Memory Dataset (Zero DB Dependency)"
+        "database": "In-Memory Dataset (Vercel Serverless Ready)"
     })
 
 @app.route('/api/defaults', methods=['GET'])
+@app.route('/defaults', methods=['GET'])
 def get_defaults():
     return jsonify({
         "defaults": predictor.defaults,
@@ -49,6 +42,7 @@ def get_defaults():
     })
 
 @app.route('/api/presets', methods=['GET'])
+@app.route('/presets', methods=['GET'])
 def get_presets():
     return jsonify({
         "presets": [
@@ -143,6 +137,7 @@ def get_presets():
     })
 
 @app.route('/api/predict', methods=['POST'])
+@app.route('/predict', methods=['POST'])
 def predict():
     try:
         data = request.json or {}
@@ -162,6 +157,7 @@ def predict():
         }), 500
 
 @app.route('/api/applications', methods=['GET'])
+@app.route('/applications', methods=['GET'])
 def get_applications():
     try:
         search = request.args.get('search', '')
@@ -185,6 +181,7 @@ def get_applications():
         }), 500
 
 @app.route('/api/stats', methods=['GET'])
+@app.route('/stats', methods=['GET'])
 def get_stats():
     try:
         stats = predictor.get_stats()
@@ -196,5 +193,4 @@ def get_stats():
         return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == '__main__':
-    print("[Flask Server] Starting Loan Eligibility AI Backend on http://127.0.0.1:5000")
-    app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
+    app.run(host='0.0.0.0', port=5000, debug=False)
