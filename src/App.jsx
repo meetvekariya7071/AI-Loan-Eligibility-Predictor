@@ -2,32 +2,14 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import LoanForm from './components/LoanForm';
 import PredictionResult from './components/PredictionResult';
-import DatabaseViewer from './components/DatabaseViewer';
-import AnalyticsDashboard from './components/AnalyticsDashboard';
 import { runClientSidePrediction } from './utils/fallbackPredictor';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('predict');
   const [presets, setPresets] = useState([]);
   const [defaults, setDefaults] = useState({});
-  const [stats, setStats] = useState(null);
   const [predictionResult, setPredictionResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  const fetchStats = async () => {
-    try {
-      const res = await fetch('/api/stats');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          setStats(data.stats);
-        }
-      }
-    } catch (err) {
-      console.warn('Backend stats endpoint unavailable, using local stats fallback:', err);
-    }
-  };
 
   const fetchPresetsAndDefaults = async () => {
     try {
@@ -48,7 +30,6 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetchStats();
     fetchPresetsAndDefaults();
   }, []);
 
@@ -67,7 +48,6 @@ export default function App() {
         if (data.success && data.data) {
           setPredictionResult(data.data);
           serverSuccess = true;
-          fetchStats();
         }
       }
     } catch (err) {
@@ -88,11 +68,7 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Top Header Navbar */}
-      <Navbar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        stats={stats}
-      />
+      <Navbar />
 
       {/* Main Content Area */}
       <main style={{
@@ -116,31 +92,20 @@ export default function App() {
           </div>
         )}
 
-        {activeTab === 'predict' && (
-          <div>
-            <LoanForm
-              onSubmit={handlePredict}
-              loading={loading}
-              presets={presets}
-              defaults={defaults}
+        <div>
+          <LoanForm
+            onSubmit={handlePredict}
+            loading={loading}
+            presets={presets}
+            defaults={defaults}
+          />
+
+          {predictionResult && (
+            <PredictionResult 
+              result={predictionResult} 
             />
-
-            {predictionResult && (
-              <PredictionResult 
-                result={predictionResult} 
-                onViewInDatabase={() => setActiveTab('database')} 
-              />
-            )}
-          </div>
-        )}
-
-        {activeTab === 'database' && (
-          <DatabaseViewer onRefreshStats={fetchStats} />
-        )}
-
-        {activeTab === 'analytics' && (
-          <AnalyticsDashboard stats={stats} />
-        )}
+          )}
+        </div>
       </main>
 
       {/* Footer */}

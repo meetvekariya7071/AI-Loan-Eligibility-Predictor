@@ -1,7 +1,7 @@
 import React from 'react';
-import { Landmark, Sparkles, Database, BarChart3, ShieldCheck } from 'lucide-react';
+import { Landmark, Sparkles } from 'lucide-react';
 
-export default function Navbar({ activeTab, setActiveTab, stats }) {
+export default function Navbar() {
   return (
     <nav style={{
       borderBottom: '1px solid var(--border-color)',
@@ -48,59 +48,6 @@ export default function Navbar({ activeTab, setActiveTab, stats }) {
               Loan Eligibility & Risk Prediction System
             </p>
           </div>
-        </div>
-
-        {/* Tab Navigation */}
-        <div style={{
-          display: 'flex',
-          background: 'rgba(255, 255, 255, 0.04)',
-          padding: '4px',
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--border-color)'
-        }}>
-          <button
-            onClick={() => setActiveTab('predict')}
-            className="btn btn-sm"
-            style={{
-              background: activeTab === 'predict' ? 'var(--accent-primary)' : 'transparent',
-              color: activeTab === 'predict' ? '#FFF' : 'var(--text-secondary)',
-              borderRadius: 'var(--radius-sm)'
-            }}
-          >
-            <Sparkles size={16} /> Predict Eligibility
-          </button>
-          <button
-            onClick={() => setActiveTab('database')}
-            className="btn btn-sm"
-            style={{
-              background: activeTab === 'database' ? 'var(--accent-primary)' : 'transparent',
-              color: activeTab === 'database' ? '#FFF' : 'var(--text-secondary)',
-              borderRadius: 'var(--radius-sm)'
-            }}
-          >
-            <Database size={16} /> Dataset Records
-            {stats?.total_applications > 0 && (
-              <span style={{
-                background: 'rgba(255,255,255,0.2)',
-                padding: '2px 6px',
-                borderRadius: '10px',
-                fontSize: '0.7rem'
-              }}>
-                {stats.total_applications}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('analytics')}
-            className="btn btn-sm"
-            style={{
-              background: activeTab === 'analytics' ? 'var(--accent-primary)' : 'transparent',
-              color: activeTab === 'analytics' ? '#FFF' : 'var(--text-secondary)',
-              borderRadius: 'var(--radius-sm)'
-            }}
-          >
-            <BarChart3 size={16} /> Analytics & Insights
-          </button>
         </div>
 
         {/* Model Live Indicator */}

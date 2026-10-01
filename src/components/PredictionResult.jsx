@@ -1,10 +1,10 @@
 import React from 'react';
 import { 
   CheckCircle2, XCircle, AlertTriangle, ShieldCheck, ShieldAlert, 
-  Database, TrendingUp, Info, PieChart, ArrowUpRight 
+  TrendingUp, Info, PieChart, Sparkles 
 } from 'lucide-react';
 
-export default function PredictionResult({ result, onViewInDatabase }) {
+export default function PredictionResult({ result }) {
   if (!result) return null;
 
   const isApproved = result.prediction === 'Approved';
@@ -22,7 +22,7 @@ export default function PredictionResult({ result, onViewInDatabase }) {
       marginTop: '24px',
       borderWidth: '2px'
     }}>
-      {/* DB Saved Notification Bar */}
+      {/* Header Notification Bar */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -36,21 +36,10 @@ export default function PredictionResult({ result, onViewInDatabase }) {
         marginBottom: '24px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
-          <Database size={16} color="var(--accent-cyan)" />
-          <span>Application <strong>#{result.id}</strong> ({result.applicant_name}) saved as new record in <strong>Database</strong></span>
+          <Sparkles size={16} color="var(--accent-cyan)" />
+          <span>Evaluation Analysis for <strong>{result.applicant_name}</strong></span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span className="badge badge-success">Saved to DB</span>
-          {onViewInDatabase && (
-            <button 
-              onClick={onViewInDatabase} 
-              className="btn btn-sm btn-accent"
-              style={{ fontSize: '0.78rem', padding: '4px 10px' }}
-            >
-              View in Database Register <ArrowUpRight size={14} />
-            </button>
-          )}
-        </div>
+        <span className="badge badge-info">Random Forest Model</span>
       </div>
 
       <div style={{
