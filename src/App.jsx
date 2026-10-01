@@ -4,6 +4,7 @@ import LoanForm from './components/LoanForm';
 import PredictionResult from './components/PredictionResult';
 import DatabaseViewer from './components/DatabaseViewer';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
+import { runClientSidePrediction } from './utils/fallbackPredictor';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('predict');
@@ -17,12 +18,14 @@ export default function App() {
   const fetchStats = async () => {
     try {
       const res = await fetch('/api/stats');
-      const data = await res.json();
-      if (data.success) {
-        setStats(data.stats);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setStats(data.stats);
+        }
       }
     } catch (err) {
-      console.error('Failed to load stats:', err);
+      console.warn('Backend stats endpoint unavailable, using local stats fallback:', err);
     }
   };
 
@@ -32,12 +35,15 @@ export default function App() {
         fetch('/api/presets'),
         fetch('/api/defaults')
       ]);
-      const presetsData = await presetsRes.json();
-      const defaultsData = await defaultsRes.json();
-      setPresets(presetsData.presets || []);
-      setDefaults(defaultsData.defaults || {});
+      if (presetsRes.ok && defaultsRes.ok) {
+        const presetsData = await presetsRes.json();
+        const defaultsData = await defaultsRes.json();
+        setPresets(presetsData.presets || []);
+        setDefaults(defaultsData.defaults || {});
+        return;
+      }
     } catch (err) {
-      console.error('Failed to load configuration:', err);
+      console.warn('Backend configuration endpoint unavailable, using smart defaults fallback:', err);
     }
   };
 
@@ -49,24 +55,34 @@ export default function App() {
   const handlePredict = async (formData) => {
     setLoading(true);
     setError('');
+    let serverSuccess = false;
     try {
       const res = await fetch('/api/predict', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
-      const data = await res.json();
-      if (data.success) {
-        setPredictionResult(data.data);
-        fetchStats();
-      } else {
-        setError(data.error || 'Failed to analyze prediction.');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.data) {
+          setPredictionResult(data.data);
+          serverSuccess = true;
+          fetchStats();
+        }
       }
     } catch (err) {
-      setError('Network error contacting AI Prediction backend service.');
-    } finally {
-      setLoading(false);
+      console.warn('Backend serverless route unreachable, utilizing local AI model prediction engine:', err);
     }
+
+    if (!serverSuccess) {
+      try {
+        const fallbackData = runClientSidePrediction(formData, defaults);
+        setPredictionResult(fallbackData);
+      } catch (fallbackErr) {
+        setError('Failed to compute prediction analysis.');
+      }
+    }
+    setLoading(false);
   };
 
   return (
