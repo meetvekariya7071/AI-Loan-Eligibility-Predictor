@@ -111,12 +111,12 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
     Loan_Amount: '',
     Loan_Term: '36',
     Employment_Status: 'Salaried',
-    Marital_Status: 'Single',
-    Loan_Purpose: 'Personal',
-    Property_Area: 'Urban',
-    Gender: 'Male',
-    Employer_Category: 'Private',
-    Education_Level: 'Graduate'
+    Marital_Status: '',
+    Loan_Purpose: '',
+    Property_Area: '',
+    Gender: '',
+    Employer_Category: '',
+    Education_Level: ''
   });
 
   const activePresets = presets && presets.length > 0 ? presets : DEFAULT_PRESETS;
@@ -152,12 +152,12 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
       Loan_Amount: '',
       Loan_Term: '36',
       Employment_Status: 'Salaried',
-      Marital_Status: 'Single',
-      Loan_Purpose: 'Personal',
-      Property_Area: 'Urban',
-      Gender: 'Male',
-      Employer_Category: 'Private',
-      Education_Level: 'Graduate',
+      Marital_Status: '',
+      Loan_Purpose: '',
+      Property_Area: '',
+      Gender: '',
+      Employer_Category: '',
+      Education_Level: '',
       ...presetData
     });
   };
@@ -178,12 +178,12 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
       Loan_Amount: '',
       Loan_Term: '36',
       Employment_Status: 'Salaried',
-      Marital_Status: 'Single',
-      Loan_Purpose: 'Personal',
-      Property_Area: 'Urban',
-      Gender: 'Male',
-      Employer_Category: 'Private',
-      Education_Level: 'Graduate'
+      Marital_Status: '',
+      Loan_Purpose: '',
+      Property_Area: '',
+      Gender: '',
+      Employer_Category: '',
+      Education_Level: ''
     });
   };
 
@@ -634,6 +634,7 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                   value={formData.Loan_Purpose}
                   onChange={e => handleChange('Loan_Purpose', e.target.value)}
                 >
+                  <option value="">-- Not Specified --</option>
                   <option value="Personal">Personal</option>
                   <option value="Car">Car / Auto</option>
                   <option value="Business">Business</option>
@@ -652,6 +653,7 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                   value={formData.Property_Area}
                   onChange={e => handleChange('Property_Area', e.target.value)}
                 >
+                  <option value="">-- Not Specified --</option>
                   <option value="Urban">Urban</option>
                   <option value="Semiurban">Semiurban</option>
                   <option value="Rural">Rural</option>
@@ -668,6 +670,7 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                   value={formData.Employer_Category}
                   onChange={e => handleChange('Employer_Category', e.target.value)}
                 >
+                  <option value="">-- Not Specified --</option>
                   <option value="Private">Private Sector</option>
                   <option value="Government">Government / Public Sector</option>
                   <option value="MNC">MNC / Corporate</option>
@@ -686,6 +689,7 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                   value={formData.Education_Level}
                   onChange={e => handleChange('Education_Level', e.target.value)}
                 >
+                  <option value="">-- Not Specified --</option>
                   <option value="Graduate">Graduate</option>
                   <option value="Not Graduate">Not Graduate</option>
                 </select>
@@ -701,6 +705,7 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                   value={formData.Marital_Status}
                   onChange={e => handleChange('Marital_Status', e.target.value)}
                 >
+                  <option value="">-- Not Specified --</option>
                   <option value="Single">Single</option>
                   <option value="Married">Married</option>
                 </select>
@@ -716,6 +721,7 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                   value={formData.Gender}
                   onChange={e => handleChange('Gender', e.target.value)}
                 >
+                  <option value="">-- Not Specified --</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                 </select>

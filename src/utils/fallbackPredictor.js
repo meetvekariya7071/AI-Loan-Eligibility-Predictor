@@ -63,20 +63,35 @@ export function runClientSidePrediction(inputDict, defaults = {}) {
   else riskLevel = 'Critical Risk';
 
   const insights = [];
-  if (cs >= 700) insights.push('✅ High credit score improves loan approval confidence.');
-  else if (cs < 600) insights.push('⚠️ Below-average credit score increases perceived risk.');
+  if (inputDict.Credit_Score !== undefined && inputDict.Credit_Score !== '') {
+    if (cs >= 700) insights.push('✅ High credit score improves loan approval confidence.');
+    else if (cs < 600) insights.push('⚠️ Below-average credit score increases perceived risk.');
+  }
 
-  if (dti <= 0.36) insights.push('✅ Healthy Debt-to-Income ratio (≤ 36%).');
-  else insights.push('⚠️ High Debt-to-Income ratio (> 36%), indicating existing financial obligations.');
+  if (inputDict.DTI_Ratio !== undefined && inputDict.DTI_Ratio !== '') {
+    if (dti <= 0.36) insights.push('✅ Healthy Debt-to-Income ratio (≤ 36%).');
+    else insights.push('⚠️ High Debt-to-Income ratio (> 36%), indicating existing financial obligations.');
+  }
 
-  if (savings >= loanAmt * 0.2) insights.push('✅ Solid liquid savings buffer available.');
-  if (collateral >= loanAmt) insights.push('✅ Collateral value fully backs the requested loan amount.');
-  else if (collateral === 0) insights.push('ℹ️ Unsecured loan request (no collateral provided).');
+  if (inputDict.Savings !== undefined && inputDict.Savings !== '') {
+    if (savings >= loanAmt * 0.2) insights.push('✅ Solid liquid savings buffer available.');
+  }
+  if (inputDict.Collateral_Value !== undefined && inputDict.Collateral_Value !== '') {
+    if (collateral >= loanAmt) insights.push('✅ Collateral value fully backs the requested loan amount.');
+    else if (collateral === 0) insights.push('ℹ️ Unsecured loan request (no collateral provided).');
+  }
 
   const totalIncome = inc + co_inc;
   const monthlyIncome = totalIncome > 0 ? totalIncome / 12.0 : 1.0;
   const incomeToLoanRatio = loanAmt > 0 ? totalIncome / loanAmt : 0;
   const collateralCoverage = loanAmt > 0 ? (collateral / loanAmt) * 100 : 0;
+
+  const userProvidedDetails = {};
+  Object.keys(inputDict).forEach(key => {
+    if (inputDict[key] !== undefined && inputDict[key] !== null && String(inputDict[key]).trim() !== '') {
+      userProvidedDetails[key] = inputDict[key];
+    }
+  });
 
   return {
     id: Math.floor(Math.random() * 90000) + 10000,
@@ -85,16 +100,7 @@ export function runClientSidePrediction(inputDict, defaults = {}) {
     approval_probability: probability,
     risk_level: riskLevel,
     insights,
-    processed_details: {
-      Applicant_Income: inc,
-      Coapplicant_Income: co_inc,
-      Credit_Score: cs,
-      DTI_Ratio: dti,
-      Loan_Amount: loanAmt,
-      Savings: savings,
-      Collateral_Value: collateral,
-      Employment_Status: empStatus
-    },
+    processed_details: userProvidedDetails,
     metrics: {
       total_income: totalIncome,
       monthly_income: Math.round(monthlyIncome * 100) / 100,

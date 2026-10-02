@@ -263,6 +263,8 @@ class LoanPredictorModel:
         else:
             risk_level = "Critical Risk"
 
+        user_provided_details = {k: v for k, v in input_dict.items() if v is not None and str(v).strip() != ''}
+
         c_score = filled_dict['Credit_Score']
         dti = filled_dict['DTI_Ratio']
         income = filled_dict['Applicant_Income'] + filled_dict['Coapplicant_Income']
@@ -271,23 +273,27 @@ class LoanPredictorModel:
         income_to_loan_ratio = (income / loan_amt) if loan_amt > 0 else 0
         
         insights = []
-        if c_score >= 700:
-            insights.append("✅ High credit score improves loan approval confidence.")
-        elif c_score < 600:
-            insights.append("⚠️ Below-average credit score increases perceived risk.")
+        if 'Credit_Score' in input_dict and input_dict['Credit_Score'] not in [None, '']:
+            if c_score >= 700:
+                insights.append("✅ High credit score improves loan approval confidence.")
+            elif c_score < 600:
+                insights.append("⚠️ Below-average credit score increases perceived risk.")
 
-        if dti <= 0.36:
-            insights.append("✅ Healthy Debt-to-Income ratio (≤ 36%).")
-        else:
-            insights.append("⚠️ High Debt-to-Income ratio (> 36%), indicating existing financial obligations.")
+        if 'DTI_Ratio' in input_dict and input_dict['DTI_Ratio'] not in [None, '']:
+            if dti <= 0.36:
+                insights.append("✅ Healthy Debt-to-Income ratio (≤ 36%).")
+            else:
+                insights.append("⚠️ High Debt-to-Income ratio (> 36%), indicating existing financial obligations.")
 
-        if filled_dict['Savings'] >= loan_amt * 0.2:
-            insights.append("✅ Solid liquid savings buffer available.")
-        
-        if filled_dict['Collateral_Value'] >= loan_amt:
-            insights.append("✅ Collateral value fully backs the requested loan amount.")
-        elif filled_dict['Collateral_Value'] == 0:
-            insights.append("ℹ️ Unsecured loan request (no collateral provided).")
+        if 'Savings' in input_dict and input_dict['Savings'] not in [None, '']:
+            if filled_dict['Savings'] >= loan_amt * 0.2:
+                insights.append("✅ Solid liquid savings buffer available.")
+
+        if 'Collateral_Value' in input_dict and input_dict['Collateral_Value'] not in [None, '']:
+            if filled_dict['Collateral_Value'] >= loan_amt:
+                insights.append("✅ Collateral value fully backs the requested loan amount.")
+            elif filled_dict['Collateral_Value'] == 0:
+                insights.append("ℹ️ Unsecured loan request (no collateral provided).")
 
         new_id = len(self.historical_applications) + len(self.recent_predictions) + 1001
         
@@ -326,7 +332,7 @@ class LoanPredictorModel:
             "approval_probability": round(approval_prob * 100, 1),
             "risk_level": risk_level,
             "insights": insights,
-            "processed_details": filled_dict,
+            "processed_details": user_provided_details,
             "metrics": {
                 "total_income": income,
                 "monthly_income": round(monthly_income, 2),
