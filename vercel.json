@@ -1,14 +1,33 @@
 {
   "version": 2,
   "functions": {
-    "api/index.py": {
-      "includeFiles": "api/model.joblib"
+    "api/*.py": {
+      "includeFiles": "api/**"
     }
   },
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/index.py"
+      "src": "/api/predict",
+      "dest": "/api/predict.py"
+    },
+    {
+      "src": "/api/defaults",
+      "dest": "/api/defaults.py"
+    },
+    {
+      "src": "/api/presets",
+      "dest": "/api/presets.py"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1.py"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
