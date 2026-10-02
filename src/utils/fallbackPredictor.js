@@ -14,15 +14,24 @@ export function runClientSidePrediction(inputDict, defaults = {}) {
     ...defaults
   };
 
-  const inc = Number(inputDict.Applicant_Income || numDefaults.Applicant_Income);
-  const co_inc = Number(inputDict.Coapplicant_Income || numDefaults.Coapplicant_Income);
-  const cs = Number(inputDict.Credit_Score || numDefaults.Credit_Score);
-  const dti = Number(inputDict.DTI_Ratio || numDefaults.DTI_Ratio);
-  const savings = Number(inputDict.Savings || numDefaults.Savings);
-  const collateral = Number(inputDict.Collateral_Value || numDefaults.Collateral_Value);
-  const loanAmt = Number(inputDict.Loan_Amount || numDefaults.Loan_Amount);
+  const getNonNegative = (val, fallback) => {
+    const n = Number(val ?? fallback);
+    return isNaN(n) ? fallback : Math.max(0, n);
+  };
+
+  const inc = getNonNegative(inputDict.Applicant_Income, numDefaults.Applicant_Income);
+  const co_inc = getNonNegative(inputDict.Coapplicant_Income, numDefaults.Coapplicant_Income);
+  const cs = getNonNegative(inputDict.Credit_Score, numDefaults.Credit_Score);
+  const dti = getNonNegative(inputDict.DTI_Ratio, numDefaults.DTI_Ratio);
+  const savings = getNonNegative(inputDict.Savings, numDefaults.Savings);
+  const collateral = getNonNegative(inputDict.Collateral_Value, numDefaults.Collateral_Value);
+  const loanAmt = getNonNegative(inputDict.Loan_Amount, numDefaults.Loan_Amount);
   const empStatus = String(inputDict.Employment_Status || 'Salaried');
-  const applicantName = String(inputDict.Applicant_Name || 'Applicant').trim() || 'Applicant';
+
+  let applicantName = String(inputDict.Applicant_Name || 'Applicant').trim();
+  if (!applicantName || /^\d+$/.test(applicantName)) {
+    applicantName = 'Applicant';
+  }
 
   // Standardized Z-Score scaling based on notebook training dataset parameters
   const z_cs = (cs - 676.03) / 69.50;

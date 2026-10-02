@@ -120,11 +120,15 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
 
   const activePresets = presets && presets.length > 0 ? presets : DEFAULT_PRESETS;
 
+  const [validationError, setValidationError] = useState('');
+
   const handleChange = (field, value) => {
+    setValidationError('');
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleApplyPreset = (presetData) => {
+    setValidationError('');
     setFormData(prev => ({
       ...prev,
       ...presetData
@@ -132,6 +136,7 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
   };
 
   const handleClear = () => {
+    setValidationError('');
     setFormData({
       Applicant_Name: '',
       Applicant_Income: '',
@@ -157,6 +162,48 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setValidationError('');
+
+    // 1. Validate Applicant Name (Cannot be numbers only)
+    const nameTrimmed = String(formData.Applicant_Name || '').trim();
+    if (nameTrimmed && /^\d+$/.test(nameTrimmed)) {
+      setValidationError('Applicant Name cannot contain numbers only. Please enter a valid text name or leave it blank.');
+      return;
+    }
+
+    // 2. Validate Non-negative numbers across all numerical fields
+    const numChecks = [
+      { key: 'Applicant_Income', label: 'Applicant Income' },
+      { key: 'Coapplicant_Income', label: 'Co-Applicant Income' },
+      { key: 'Age', label: 'Age', min: 18 },
+      { key: 'Dependents', label: 'Number of Dependents' },
+      { key: 'Credit_Score', label: 'Credit Score', min: 300, max: 850 },
+      { key: 'Existing_Loans', label: 'Existing Loans' },
+      { key: 'DTI_Ratio', label: 'DTI Ratio' },
+      { key: 'Savings', label: 'Liquid Savings' },
+      { key: 'Collateral_Value', label: 'Collateral Value' },
+      { key: 'Loan_Amount', label: 'Requested Loan Amount' }
+    ];
+
+    for (const item of numChecks) {
+      const val = formData[item.key];
+      if (val !== '' && val !== null && !isNaN(Number(val))) {
+        const num = Number(val);
+        if (num < 0) {
+          setValidationError(`${item.label} cannot be a negative number.`);
+          return;
+        }
+        if (item.min !== undefined && num > 0 && num < item.min) {
+          setValidationError(`${item.label} must be at least ${item.min}.`);
+          return;
+        }
+        if (item.max !== undefined && num > item.max) {
+          setValidationError(`${item.label} cannot exceed ${item.max}.`);
+          return;
+        }
+      }
+    }
+
     const cleanPayload = {};
     Object.keys(formData).forEach(key => {
       if (formData[key] !== '' && formData[key] !== null) {
@@ -248,6 +295,24 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
         </div>
       </div>
 
+      {validationError && (
+        <div style={{
+          background: 'rgba(239, 68, 68, 0.15)',
+          border: '1px solid rgba(239, 68, 68, 0.3)',
+          color: '#EF4444',
+          padding: '12px 18px',
+          borderRadius: 'var(--radius-md)',
+          marginBottom: '20px',
+          fontSize: '0.88rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <AlertCircle size={18} />
+          {validationError}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit}>
         {/* SECTION 1: KEY LOAN & FINANCIAL REQUIREMENTS */}
         <div style={{ marginBottom: '28px' }}>
@@ -293,6 +358,7 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
               <input
                 type="number"
                 required
+                min="0"
                 placeholder={`e.g. 15000 (Default: $${defaults?.Applicant_Income || 12000})`}
                 className="input-field"
                 value={formData.Applicant_Income}
@@ -325,6 +391,7 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
               <input
                 type="number"
                 required
+                min="0"
                 placeholder={`e.g. 25000 (Default: $${defaults?.Loan_Amount || 20000})`}
                 className="input-field"
                 value={formData.Loan_Amount}
@@ -404,6 +471,7 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                 </label>
                 <input
                   type="number"
+                  min="0"
                   placeholder={`Default: $${defaults?.Coapplicant_Income || 0}`}
                   className="input-field"
                   value={formData.Coapplicant_Income}
@@ -419,6 +487,7 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                 </label>
                 <input
                   type="number"
+                  min="18"
                   placeholder={`Default: ${defaults?.Age || 35}`}
                   className="input-field"
                   value={formData.Age}
@@ -434,6 +503,7 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                 </label>
                 <input
                   type="number"
+                  min="0"
                   placeholder={`Default: ${defaults?.Dependents || 0}`}
                   className="input-field"
                   value={formData.Dependents}
@@ -450,6 +520,8 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                 <input
                   type="number"
                   step="0.01"
+                  min="0"
+                  max="1.0"
                   placeholder={`Default: ${defaults?.DTI_Ratio || 0.35}`}
                   className="input-field"
                   value={formData.DTI_Ratio}
@@ -465,6 +537,7 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                 </label>
                 <input
                   type="number"
+                  min="0"
                   placeholder={`Default: $${defaults?.Savings || 5000}`}
                   className="input-field"
                   value={formData.Savings}
@@ -480,6 +553,7 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                 </label>
                 <input
                   type="number"
+                  min="0"
                   placeholder={`Default: $${defaults?.Collateral_Value || 10000}`}
                   className="input-field"
                   value={formData.Collateral_Value}
@@ -495,6 +569,7 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                 </label>
                 <input
                   type="number"
+                  min="0"
                   placeholder={`Default: ${defaults?.Existing_Loans || 0}`}
                   className="input-field"
                   value={formData.Existing_Loans}

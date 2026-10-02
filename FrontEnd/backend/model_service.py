@@ -199,7 +199,11 @@ class LoanPredictorModel:
 
     def predict_and_save(self, input_dict):
         filled_dict = {}
-        applicant_name = str(input_dict.get('Applicant_Name', '')).strip() or 'Applicant'
+        raw_name = str(input_dict.get('Applicant_Name', '')).strip()
+        if not raw_name or raw_name.isdigit():
+            applicant_name = 'Applicant'
+        else:
+            applicant_name = raw_name
 
         for col in self.num_cols:
             val = input_dict.get(col)
@@ -207,7 +211,8 @@ class LoanPredictorModel:
                 filled_dict[col] = self.defaults[col]
             else:
                 try:
-                    filled_dict[col] = float(val)
+                    num_val = float(val)
+                    filled_dict[col] = max(0.0, num_val)
                 except ValueError:
                     filled_dict[col] = self.defaults[col]
 
