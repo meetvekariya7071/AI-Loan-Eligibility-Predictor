@@ -32,7 +32,7 @@ const DEFAULT_PRESETS = [
   },
   {
     name: "Quick Fill (Essential Only)",
-    description: "Only 5 key fields provided! Smart AI defaults fill remaining fields.",
+    description: "Only 5 key fields provided! Omitted optional fields remain empty.",
     data: {
       Applicant_Name: "Sophia Taylor",
       Applicant_Income: 12000,
@@ -96,6 +96,7 @@ const DEFAULT_PRESETS = [
 
 export default function LoanForm({ onSubmit, loading, presets = [], defaults }) {
   const [mode, setMode] = useState('quick'); // 'quick' or 'full'
+  const [validationError, setValidationError] = useState('');
   const [formData, setFormData] = useState({
     Applicant_Name: '',
     Applicant_Income: '',
@@ -108,7 +109,7 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
     Savings: '',
     Collateral_Value: '',
     Loan_Amount: '',
-    Loan_Term: '',
+    Loan_Term: '36',
     Employment_Status: 'Salaried',
     Marital_Status: 'Single',
     Loan_Purpose: 'Personal',
@@ -120,19 +121,45 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
 
   const activePresets = presets && presets.length > 0 ? presets : DEFAULT_PRESETS;
 
-  const [validationError, setValidationError] = useState('');
+  const preventNegativeKeys = (e) => {
+    if (['-', 'e', 'E', '+'].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
 
   const handleChange = (field, value) => {
     setValidationError('');
+    const numFields = ['Applicant_Income', 'Coapplicant_Income', 'Age', 'Dependents', 'Credit_Score', 'Existing_Loans', 'DTI_Ratio', 'Savings', 'Collateral_Value', 'Loan_Amount'];
+    if (numFields.includes(field) && typeof value === 'string') {
+      value = value.replace(/-/g, '');
+    }
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleApplyPreset = (presetData) => {
     setValidationError('');
-    setFormData(prev => ({
-      ...prev,
+    setFormData({
+      Applicant_Name: '',
+      Applicant_Income: '',
+      Coapplicant_Income: '',
+      Age: '',
+      Dependents: '',
+      Credit_Score: '',
+      Existing_Loans: '',
+      DTI_Ratio: '',
+      Savings: '',
+      Collateral_Value: '',
+      Loan_Amount: '',
+      Loan_Term: '36',
+      Employment_Status: 'Salaried',
+      Marital_Status: 'Single',
+      Loan_Purpose: 'Personal',
+      Property_Area: 'Urban',
+      Gender: 'Male',
+      Employer_Category: 'Private',
+      Education_Level: 'Graduate',
       ...presetData
-    }));
+    });
   };
 
   const handleClear = () => {
@@ -149,7 +176,7 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
       Savings: '',
       Collateral_Value: '',
       Loan_Amount: '',
-      Loan_Term: '',
+      Loan_Term: '36',
       Employment_Status: 'Salaried',
       Marital_Status: 'Single',
       Loan_Purpose: 'Personal',
@@ -233,8 +260,8 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
           </h2>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
             {mode === 'quick' 
-              ? 'Enter key financial details below. Unfilled optional fields will use AI smart dataset defaults.' 
-              : 'Enter complete 19-point applicant details for precise ML model evaluation.'}
+              ? 'Enter key financial details below. Optional fields remain empty if omitted.' 
+              : 'Enter complete 19-point applicant details for evaluation.'}
           </p>
         </div>
 
@@ -359,9 +386,11 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                 type="number"
                 required
                 min="0"
-                placeholder={`e.g. 15000 (Default: $${defaults?.Applicant_Income || 12000})`}
+                placeholder="e.g. 15000"
                 className="input-field"
                 value={formData.Applicant_Income}
+                onKeyDown={preventNegativeKeys}
+                onInput={e => { if (e.target.value < 0) e.target.value = Math.abs(e.target.value); }}
                 onChange={e => handleChange('Applicant_Income', e.target.value)}
               />
             </div>
@@ -376,9 +405,11 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                 required
                 min="300"
                 max="850"
-                placeholder={`e.g. 720 (Default: ${defaults?.Credit_Score || 650})`}
+                placeholder="e.g. 720"
                 className="input-field"
                 value={formData.Credit_Score}
+                onKeyDown={preventNegativeKeys}
+                onInput={e => { if (e.target.value < 0) e.target.value = Math.abs(e.target.value); }}
                 onChange={e => handleChange('Credit_Score', e.target.value)}
               />
             </div>
@@ -392,9 +423,11 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                 type="number"
                 required
                 min="0"
-                placeholder={`e.g. 25000 (Default: $${defaults?.Loan_Amount || 20000})`}
+                placeholder="e.g. 25000"
                 className="input-field"
                 value={formData.Loan_Amount}
+                onKeyDown={preventNegativeKeys}
+                onInput={e => { if (e.target.value < 0) e.target.value = Math.abs(e.target.value); }}
                 onChange={e => handleChange('Loan_Amount', e.target.value)}
               />
             </div>
@@ -472,9 +505,11 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                 <input
                   type="number"
                   min="0"
-                  placeholder={`Default: $${defaults?.Coapplicant_Income || 0}`}
+                  placeholder="e.g. 0"
                   className="input-field"
                   value={formData.Coapplicant_Income}
+                  onKeyDown={preventNegativeKeys}
+                  onInput={e => { if (e.target.value < 0) e.target.value = Math.abs(e.target.value); }}
                   onChange={e => handleChange('Coapplicant_Income', e.target.value)}
                 />
               </div>
@@ -488,9 +523,11 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                 <input
                   type="number"
                   min="18"
-                  placeholder={`Default: ${defaults?.Age || 35}`}
+                  placeholder="e.g. 35"
                   className="input-field"
                   value={formData.Age}
+                  onKeyDown={preventNegativeKeys}
+                  onInput={e => { if (e.target.value < 0) e.target.value = Math.abs(e.target.value); }}
                   onChange={e => handleChange('Age', e.target.value)}
                 />
               </div>
@@ -504,9 +541,11 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                 <input
                   type="number"
                   min="0"
-                  placeholder={`Default: ${defaults?.Dependents || 0}`}
+                  placeholder="e.g. 0"
                   className="input-field"
                   value={formData.Dependents}
+                  onKeyDown={preventNegativeKeys}
+                  onInput={e => { if (e.target.value < 0) e.target.value = Math.abs(e.target.value); }}
                   onChange={e => handleChange('Dependents', e.target.value)}
                 />
               </div>
@@ -522,9 +561,11 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                   step="0.01"
                   min="0"
                   max="1.0"
-                  placeholder={`Default: ${defaults?.DTI_Ratio || 0.35}`}
+                  placeholder="e.g. 0.35"
                   className="input-field"
                   value={formData.DTI_Ratio}
+                  onKeyDown={preventNegativeKeys}
+                  onInput={e => { if (e.target.value < 0) e.target.value = Math.abs(e.target.value); }}
                   onChange={e => handleChange('DTI_Ratio', e.target.value)}
                 />
               </div>
@@ -538,9 +579,11 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                 <input
                   type="number"
                   min="0"
-                  placeholder={`Default: $${defaults?.Savings || 5000}`}
+                  placeholder="e.g. 5000"
                   className="input-field"
                   value={formData.Savings}
+                  onKeyDown={preventNegativeKeys}
+                  onInput={e => { if (e.target.value < 0) e.target.value = Math.abs(e.target.value); }}
                   onChange={e => handleChange('Savings', e.target.value)}
                 />
               </div>
@@ -554,9 +597,11 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                 <input
                   type="number"
                   min="0"
-                  placeholder={`Default: $${defaults?.Collateral_Value || 10000}`}
+                  placeholder="e.g. 10000"
                   className="input-field"
                   value={formData.Collateral_Value}
+                  onKeyDown={preventNegativeKeys}
+                  onInput={e => { if (e.target.value < 0) e.target.value = Math.abs(e.target.value); }}
                   onChange={e => handleChange('Collateral_Value', e.target.value)}
                 />
               </div>
@@ -570,9 +615,11 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
                 <input
                   type="number"
                   min="0"
-                  placeholder={`Default: ${defaults?.Existing_Loans || 0}`}
+                  placeholder="e.g. 0"
                   className="input-field"
                   value={formData.Existing_Loans}
+                  onKeyDown={preventNegativeKeys}
+                  onInput={e => { if (e.target.value < 0) e.target.value = Math.abs(e.target.value); }}
                   onChange={e => handleChange('Existing_Loans', e.target.value)}
                 />
               </div>
@@ -689,7 +736,7 @@ export default function LoanForm({ onSubmit, loading, presets = [], defaults }) 
             <HelpCircle size={20} color="var(--accent-primary)" />
             <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
               <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Quick Fill Active: </span> 
-              The remaining 14 applicant parameters (Savings, Collateral, DTI, Purpose, etc.) will automatically utilize trained dataset medians/modes. Switch to <strong>Full Application</strong> mode above anytime to customize all 19 fields.
+              Core required fields are displayed above. Optional fields remain empty if omitted. Switch to <strong>Full Application</strong> mode to enter all 19 fields.
             </div>
           </div>
         )}
